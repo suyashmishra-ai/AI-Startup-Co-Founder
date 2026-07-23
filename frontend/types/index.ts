@@ -149,5 +149,3 @@ export interface Analysis {
   created_at: string;
 }
 
-declare module 'lucide-react';
-

@@ -71,10 +71,10 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
 export const api = {
   // Auth
-  register: (data: { email: string; password: str; name?: string }) =>
+  register: (data: { email: string; password: string; name?: string }) =>
     request<AuthResponse>('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
 
-  login: (data: { email: string; password: str }) =>
+  login: (data: { email: string; password: string }) =>
     request<AuthResponse>('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
 
   me: () => request<User>('/auth/me'),

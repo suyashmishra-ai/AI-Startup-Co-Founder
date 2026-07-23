@@ -66,7 +66,7 @@ def create_fallback_blueprint(inputs: Dict[str, Any], idea_name: str = "Startup 
             "frontend": "Next.js + React + Tailwind CSS",
             "backend": "FastAPI + SQLAlchemy",
             "database": "PostgreSQL",
-            "aiModel": "Claude 3.5 Sonnet / Gemini",
+            "aiModel": "Gemini 1.5 Flash / Claude 3.5",
             "hosting": "Vercel + Render",
             "authentication": "JWT Auth",
             "storage": "PostgreSQL JSONB"
@@ -103,6 +103,25 @@ def create_fallback_blueprint(inputs: Dict[str, Any], idea_name: str = "Startup 
         }
     )
 
+def generate_with_gemini(system_prompt: str, user_prompt: str, gemini_key: str) -> StartupBlueprint:
+    """Calls 100% Free Google Gemini 1.5 Flash API."""
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
+    headers = {"Content-Type": "application/json"}
+    combined_prompt = f"{system_prompt}\n\nUSER INPUT:\n{user_prompt}"
+    
+    payload = {
+        "contents": [{"parts": [{"text": combined_prompt}]}]
+    }
+
+    with httpx.Client(timeout=45.0) as client:
+        res = client.post(url, headers=headers, json=payload)
+        res.raise_for_status()
+        data = res.json()
+        raw_text = data["candidates"][0]["content"]["parts"][0]["text"]
+        cleaned = clean_json_string(raw_text)
+        parsed_json = json.loads(cleaned)
+        return StartupBlueprint(**parsed_json)
+
 def generate_blueprint_from_llm(inputs: Dict[str, Any]) -> StartupBlueprint:
     system_prompt, user_prompt_template = load_prompt_templates()
     user_prompt = user_prompt_template.format(
@@ -116,47 +135,48 @@ def generate_blueprint_from_llm(inputs: Dict[str, Any]) -> StartupBlueprint:
         goal=inputs.get("goal", "")
     )
     
+    provider = os.getenv("LLM_PROVIDER", "anthropic").lower()
+    gemini_key = os.getenv("GEMINI_API_KEY")
     anthropic_key = os.getenv("ANTHROPIC_API_KEY")
-    if not anthropic_key or anthropic_key == "mock-anthropic-key-for-dev":
-        # Fallback to test/dev generator
-        return create_fallback_blueprint(inputs)
-    
-    # Live API Call
-    url = "https://api.anthropic.com/v1/messages"
-    headers = {
-        "x-api-key": anthropic_key,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json"
-    }
-    payload = {
-        "model": "claude-sonnet-4-6",
-        "max_tokens": 2000,
-        "system": system_prompt,
-        "messages": [{"role": "user", "content": user_prompt}]
-    }
 
-    try:
-        with httpx.Client(timeout=45.0) as client:
-            response = client.post(url, headers=headers, json=payload)
-            response.raise_for_error()
-            data = response.json()
-            raw_text = "".join([b.get("text", "") for b in data.get("content", [])])
-            cleaned = clean_json_string(raw_text)
-            parsed_json = json.loads(cleaned)
-            return StartupBlueprint(**parsed_json)
-    except Exception as exc:
-        # Retry logic: one corrective attempt if first response failed schema check or JSON parsing
-        retry_prompt = f"{user_prompt}\n\nIMPORTANT: Your previous output failed JSON validation. Respond with ONLY valid JSON matching the specified schema exactly. No markdown, no commentary."
-        payload["messages"] = [{"role": "user", "content": retry_prompt}]
+    # 1. Check if user configured Free Gemini API Key
+    if (provider == "gemini" or not anthropic_key or anthropic_key == "mock-anthropic-key-for-dev") and gemini_key and gemini_key != "your_gemini_api_key_here":
+        try:
+            return generate_with_gemini(system_prompt, user_prompt, gemini_key)
+        except Exception:
+            # Fallback retry attempt for Gemini
+            try:
+                retry_user_prompt = f"{user_prompt}\n\nIMPORTANT: Respond ONLY with valid raw JSON matching the schema."
+                return generate_with_gemini(system_prompt, retry_user_prompt, gemini_key)
+            except Exception:
+                return create_fallback_blueprint(inputs)
+
+    # 2. Check Anthropic API Key
+    if anthropic_key and anthropic_key != "mock-anthropic-key-for-dev":
+        url = "https://api.anthropic.com/v1/messages"
+        headers = {
+            "x-api-key": anthropic_key,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json"
+        }
+        payload = {
+            "model": "claude-sonnet-4-6",
+            "max_tokens": 2000,
+            "system": system_prompt,
+            "messages": [{"role": "user", "content": user_prompt}]
+        }
+
         try:
             with httpx.Client(timeout=45.0) as client:
                 response = client.post(url, headers=headers, json=payload)
-                response.raise_for_error()
+                response.raise_for_status()
                 data = response.json()
                 raw_text = "".join([b.get("text", "") for b in data.get("content", [])])
                 cleaned = clean_json_string(raw_text)
                 parsed_json = json.loads(cleaned)
                 return StartupBlueprint(**parsed_json)
         except Exception:
-            # If retry still fails, fall back to safe structured model response to avoid breaking client
             return create_fallback_blueprint(inputs)
+
+    # 3. Fallback for local testing/dev when no live keys are configured
+    return create_fallback_blueprint(inputs)

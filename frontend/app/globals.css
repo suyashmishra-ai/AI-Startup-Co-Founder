@@ -1,0 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ink: #0E1524;
+  --ink-2: #131C30;
+  --surface: #16203A;
+  --line: #2A3A5C;
+  --line-soft: rgba(79, 209, 197, 0.18);
+  --cyan: #4FD1C5;
+  --gold: #E0A458;
+  --paper: #ECE9E1;
+  --paper-dim: #A9B2C4;
+  --coral: #E2725B;
+}
+
+body {
+  background-color: var(--ink);
+  color: var(--paper);
+  font-family: 'Inter', sans-serif;
+  background-image:
+    linear-gradient(var(--line-soft) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+  background-size: 32px 32px;
+  min-height: 100vh;
+}
+
+::selection {
+  background: var(--cyan);
+  color: #082024;
+}
+
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 2s linear infinite;
+}

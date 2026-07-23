@@ -1,0 +1,117 @@
+'use client';
+
+import { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { api } from '@/lib/api';
+import { useAppStore } from '@/lib/store';
+import { KeyRound, Mail, User as UserIcon, AlertCircle } from 'lucide-react';
+
+export default function SignupPage() {
+  const router = useRouter();
+  const setUser = useAppStore((state) => state.setUser);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      const res = await api.register({ name, email, password });
+      localStorage.setItem('access_token', res.tokens.access_token);
+      localStorage.setItem('refresh_token', res.tokens.refresh_token);
+      setUser(res.user);
+      router.push('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Failed to create account');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="max-w-md mx-auto py-12 space-y-6">
+      <div className="text-center space-y-2">
+        <h1 className="font-serif text-3xl font-semibold text-paper">Create Account</h1>
+        <p className="font-mono text-xs text-paper-dim uppercase tracking-wider">Start validating your startup ideas</p>
+      </div>
+
+      <div className="bg-surface border border-line p-8 rounded space-y-6 shadow-xl">
+        {error && (
+          <div className="p-3 bg-coral/10 border border-coral/30 rounded text-coral font-mono text-xs flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="font-mono text-xs text-paper-dim uppercase">Full Name</label>
+            <div className="relative">
+              <UserIcon className="w-4 h-4 absolute left-3 top-3.5 text-paper-dim" />
+              <input
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Alex Founder"
+                className="w-full bg-ink-2 border border-line focus:border-cyan text-paper pl-10 pr-3 py-2.5 rounded text-sm outline-none transition-colors"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="font-mono text-xs text-paper-dim uppercase">Email Address</label>
+            <div className="relative">
+              <Mail className="w-4 h-4 absolute left-3 top-3.5 text-paper-dim" />
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="founder@startup.com"
+                className="w-full bg-ink-2 border border-line focus:border-cyan text-paper pl-10 pr-3 py-2.5 rounded text-sm outline-none transition-colors"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="font-mono text-xs text-paper-dim uppercase">Password</label>
+            <div className="relative">
+              <KeyRound className="w-4 h-4 absolute left-3 top-3.5 text-paper-dim" />
+              <input
+                type="password"
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="At least 6 characters"
+                className="w-full bg-ink-2 border border-line focus:border-cyan text-paper pl-10 pr-3 py-2.5 rounded text-sm outline-none transition-colors"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-cyan text-[#082024] font-mono text-xs uppercase font-bold py-3 rounded hover:bg-cyan/90 transition-all disabled:opacity-50 mt-2"
+          >
+            {loading ? 'Creating Account...' : 'Get Started →'}
+          </button>
+        </form>
+
+        <div className="text-center font-mono text-xs text-paper-dim pt-2">
+          Already have an account?{' '}
+          <Link href="/login" className="text-cyan hover:underline">
+            Sign In
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}

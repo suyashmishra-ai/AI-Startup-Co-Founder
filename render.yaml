@@ -1,0 +1,19 @@
+services:
+  # Backend API Service
+  - type: web
+    name: ai-startup-cofounder-api
+    env: python
+    region: singapore
+    buildCommand: "pip install -r backend/requirements.txt"
+    startCommand: "uvicorn backend.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: DATABASE_URL
+        value: sqlite:///./startup_cofounder.db
+      - key: JWT_SECRET
+        generateValue: true
+      - key: LLM_PROVIDER
+        value: gemini
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        value: "https://your-frontend-domain.vercel.app"

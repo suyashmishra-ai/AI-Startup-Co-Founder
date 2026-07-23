@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAppStore } from '@/lib/store';
-import { KeyRound, Mail, User as UserIcon, AlertCircle } from 'lucide-react';
+import { KeyRound, Mail, User as UserIcon, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -13,6 +13,7 @@ export default function SignupPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -26,7 +27,8 @@ export default function SignupPage() {
       localStorage.setItem('access_token', res.tokens.access_token);
       localStorage.setItem('refresh_token', res.tokens.refresh_token);
       setUser(res.user);
-      router.push('/dashboard');
+      const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/dashboard';
+      router.push(redirectUrl);
     } catch (err: any) {
       setError(err.message || 'Failed to create account');
     } finally {
@@ -59,7 +61,7 @@ export default function SignupPage() {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Alex Founder"
+                placeholder="Enter your full name"
                 className="w-full bg-ink-2 border border-line focus:border-cyan text-paper pl-10 pr-3 py-2.5 rounded text-sm outline-none transition-colors"
               />
             </div>
@@ -74,7 +76,7 @@ export default function SignupPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="founder@startup.com"
+                placeholder="Enter your email address"
                 className="w-full bg-ink-2 border border-line focus:border-cyan text-paper pl-10 pr-3 py-2.5 rounded text-sm outline-none transition-colors"
               />
             </div>
@@ -85,14 +87,22 @@ export default function SignupPage() {
             <div className="relative">
               <KeyRound className="w-4 h-4 absolute left-3 top-3.5 text-paper-dim" />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
                 minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="At least 6 characters"
-                className="w-full bg-ink-2 border border-line focus:border-cyan text-paper pl-10 pr-3 py-2.5 rounded text-sm outline-none transition-colors"
+                placeholder="Create a password"
+                className="w-full bg-ink-2 border border-line focus:border-cyan text-paper pl-10 pr-10 py-2.5 rounded text-sm outline-none transition-colors"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-3 text-paper-dim hover:text-paper transition-colors focus:outline-none"
+                title={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
           </div>
 

@@ -1,14 +1,27 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAppStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { Sparkles, LogOut, FolderKanban, PlusCircle } from 'lucide-react';
 
+import { useEffect } from 'react';
+
 export default function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, setUser } = useAppStore();
+
+  useEffect(() => {
+    if (!user && typeof window !== 'undefined' && localStorage.getItem('access_token')) {
+      api.me().then(setUser).catch(() => {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        setUser(null);
+      });
+    }
+  }, [user, setUser]);
 
   const handleLogout = async () => {
     try {
@@ -16,6 +29,8 @@ export default function Navbar() {
     } catch (e) {
       // Ignore logout errors
     } finally {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
       setUser(null);
       router.push('/login');
     }
@@ -62,18 +77,22 @@ export default function Navbar() {
             </>
           ) : (
             <div className="flex items-center gap-3">
-              <Link
-                href="/login"
-                className="font-mono text-xs text-paper-dim hover:text-paper transition-colors px-3 py-1.5"
-              >
-                Login
-              </Link>
-              <Link
-                href="/signup"
-                className="font-mono text-xs font-semibold bg-cyan text-[#082024] hover:bg-cyan/90 transition-all px-4 py-1.5 rounded"
-              >
-                Sign Up
-              </Link>
+              {pathname !== '/login' && (
+                <Link
+                  href="/login"
+                  className="font-mono text-xs text-paper-dim hover:text-paper transition-colors px-3 py-1.5"
+                >
+                  Login
+                </Link>
+              )}
+              {pathname !== '/signup' && (
+                <Link
+                  href="/signup"
+                  className="font-mono text-xs font-semibold bg-cyan text-[#082024] hover:bg-cyan/90 transition-all px-4 py-1.5 rounded"
+                >
+                  Sign Up
+                </Link>
+              )}
             </div>
           )}
         </nav>

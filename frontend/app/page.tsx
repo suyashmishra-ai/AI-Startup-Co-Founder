@@ -1,7 +1,39 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Sparkles, Rocket, Compass, Target, ArrowRight, ShieldCheck, Zap } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useAppStore } from '@/lib/store';
+import { api } from '@/lib/api';
+import { Sparkles, Rocket, Compass, Target, ArrowRight, ShieldCheck, Zap, Lightbulb } from 'lucide-react';
 
 export default function LandingPage() {
+  const router = useRouter();
+  const { user, setUser } = useAppStore();
+  const [idea, setIdea] = useState('');
+
+  useEffect(() => {
+    if (!user && typeof window !== 'undefined' && localStorage.getItem('access_token')) {
+      api.me().then(setUser).catch(() => {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        setUser(null);
+      });
+    }
+  }, [user, setUser]);
+
+  const handleStartBuilding = (e: React.FormEvent) => {
+    e.preventDefault();
+    const queryParam = idea.trim() ? `?idea=${encodeURIComponent(idea.trim())}` : '';
+    const targetPath = `/projects/new${queryParam}`;
+
+    if (user || (typeof window !== 'undefined' && localStorage.getItem('access_token'))) {
+      router.push(targetPath);
+    } else {
+      router.push(`/signup?redirect=${encodeURIComponent(targetPath)}`);
+    }
+  };
+
   return (
     <div className="space-y-20 py-8">
       {/* Hero Section */}
@@ -20,21 +52,29 @@ export default function LandingPage() {
           Feed it your idea, budget, and stage. It behaves like an experienced co-founder — validating the problem, sizing the market, sketching the business model, and handing you a 30-day execution plan.
         </p>
 
-        <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
-          <Link
-            href="/projects/new"
-            className="font-mono text-sm font-semibold bg-cyan text-[#082024] hover:bg-cyan/90 transition-all px-8 py-3.5 rounded shadow-lg shadow-cyan/20 flex items-center gap-2"
-          >
-            <span>Build Your Blueprint</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-          <Link
-            href="/login"
-            className="font-mono text-sm border border-line text-paper-dim hover:border-cyan hover:text-cyan transition-all px-6 py-3.5 rounded"
-          >
-            Sign In to Dashboard
-          </Link>
-        </div>
+        {/* Interactive Quick Idea Form */}
+        <form onSubmit={handleStartBuilding} className="max-w-xl mx-auto space-y-3 pt-2">
+          <div className="relative flex items-center">
+            <Lightbulb className="w-5 h-5 absolute left-4 text-paper-dim/60" />
+            <input
+              type="text"
+              value={idea}
+              onChange={(e) => setIdea(e.target.value)}
+              placeholder="e.g. An AI agent that automates customer onboarding..."
+              className="w-full bg-surface border border-line focus:border-cyan text-paper pl-12 pr-36 py-4 rounded text-sm outline-none transition-all shadow-xl"
+            />
+            <button
+              type="submit"
+              className="absolute right-2 font-mono text-xs font-semibold bg-cyan text-[#082024] hover:bg-cyan/90 transition-all px-4 py-2.5 rounded flex items-center gap-1.5 cursor-pointer"
+            >
+              <span>Build Blueprint</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          <p className="font-mono text-[11px] text-paper-dim/70 text-center">
+            Enter your concept above to generate a full business model & execution roadmap.
+          </p>
+        </form>
       </section>
 
       {/* Feature Grid */}

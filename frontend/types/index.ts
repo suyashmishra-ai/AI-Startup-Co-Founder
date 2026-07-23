@@ -148,3 +148,6 @@ export interface Analysis {
   blueprint_json: StartupBlueprint;
   created_at: string;
 }
+
+declare module 'lucide-react';
+

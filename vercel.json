@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/.next",
+  "rewrites": [
+    {
+      "source": "/api/py/:path*",
+      "destination": "/api/index.py"
+    }
+  ]
+}

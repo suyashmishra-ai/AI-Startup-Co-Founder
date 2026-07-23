@@ -36,6 +36,20 @@ export default function NewProjectPage() {
   const [analysisId, setAnalysisId] = useState<string | undefined>();
   const [projectId, setProjectId] = useState<string | undefined>();
 
+  // Auth Check & Query Params
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        await api.me();
+        const urlIdea = new URLSearchParams(window.location.search).get('idea');
+        if (urlIdea) setIdea(urlIdea);
+      } catch (e) {
+        router.push('/login');
+      }
+    }
+    checkAuth();
+  }, [router]);
+
   // Rotate loading messages
   useEffect(() => {
     if (viewState !== 'loading') return;

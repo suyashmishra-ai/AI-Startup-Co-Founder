@@ -1,5 +1,7 @@
 # AI Startup Co-Founder (MVP)
 
+🚀 **Live Website Demo**: [https://ai-startup-co-founder-beta.vercel.app](https://ai-startup-co-founder-beta.vercel.app)
+
 **AI Startup Co-Founder** is an intelligent full-stack application that transforms startup ideas into structured, validated business blueprints.
 
 Instead of generic advice, the AI acts like an experienced co-founder and accelerator mentor (e.g. Y Combinator / Techstars), generating actionable outputs including:
